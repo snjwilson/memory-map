@@ -2,8 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
+	"os"
 
+	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/snjwilson/memory-map/internal/adapters"
 	"github.com/snjwilson/memory-map/internal/core/card"
 	"github.com/snjwilson/memory-map/internal/core/deck"
@@ -13,7 +16,12 @@ import (
 )
 
 func main() {
-	db, _ := sql.Open("postgres", "postgres://user:pass@localhost/dbname?sslmode=disable")
+	db, err := sql.Open("pgx", "postgres://postgres:@localhost:5432/dbname=memorymap?sslmode=disable")
+	if err != nil {
+		fmt.Printf("Error connecting to DB - %v\n", err.Error())
+		os.Exit(1)
+	}
+	defer db.Close()
 
 	// Wire up the infrastructure
 	deckRepo := postgres.NewDeckRepository(db)
@@ -38,5 +46,6 @@ func main() {
 		Addr:    ":8080",
 		Handler: mux,
 	}
+	fmt.Println("Initializing the server...")
 	server.ListenAndServe()
 }
