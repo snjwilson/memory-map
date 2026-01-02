@@ -62,7 +62,8 @@ func main() {
 	mux.Handle("DELETE /cards/:id", middleware.Auth(http.HandlerFunc(h.DeleteCard)))
 
 	// Study Routes
-	mux.HandleFunc("POST /reviews", h.SubmitReview)
+	mux.Handle("GET /study/due?deck_id={id}", middleware.Auth(http.HandlerFunc(h.GetDueCards)))
+	mux.Handle("POST study/review", middleware.Auth(http.HandlerFunc(h.SubmitReview)))
 
 	server := &http.Server{
 		Addr:    ":8080",
