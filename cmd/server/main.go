@@ -55,7 +55,11 @@ func main() {
 	mux.Handle("DELETE /decks/:id", middleware.Auth(http.HandlerFunc(h.DeleteDeck)))
 
 	// Card Routes
-	mux.HandleFunc("GET /cards/due", h.GetDueCards)
+	mux.Handle("POST /cards", middleware.Auth(http.HandlerFunc(h.CreateCard)))
+	mux.Handle("GET /decks/:id/cards", middleware.Auth(http.HandlerFunc(h.GetDeckCards)))
+	mux.Handle("GET /cards/:id", middleware.Auth(http.HandlerFunc(h.GetCard)))
+	mux.Handle("PUT /cards/:id", middleware.Auth(http.HandlerFunc(h.UpdateCard)))
+	mux.Handle("DELETE /cards/:id", middleware.Auth(http.HandlerFunc(h.DeleteCard)))
 
 	// Study Routes
 	mux.HandleFunc("POST /reviews", h.SubmitReview)

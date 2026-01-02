@@ -72,3 +72,33 @@ func (s *Service) GetDueCards(ctx context.Context, deckID string) ([]*Card, erro
 	// We might limit the batch size here (e.g., fetch 20 at a time)
 	return s.repo.GetDueCards(ctx, deckID, 20)
 }
+
+func (s *Service) GetById(ctx context.Context, id string) (*Card, error) {
+	return s.repo.GetByID(ctx, id)
+}
+
+func (s *Service) GetByDeckId(ctx context.Context, deckId string) ([]*Card, error) {
+	return s.repo.GetByDeckID(ctx, deckId)
+}
+
+// UpdateCard edits the front/back content of a card
+func (s *Service) UpdateCard(ctx context.Context, id, front, back string) error {
+	c, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	if front == "" {
+		return ErrInvalidContent
+	}
+
+	c.Front = front
+	c.Back = back
+	c.UpdatedAt = time.Now().UTC()
+
+	return s.repo.Update(ctx, c)
+}
+
+func (s *Service) DeleteCard(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
+}
