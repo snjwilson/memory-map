@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/snjwilson/memory-map/internal/core/deck"
+	"github.com/snjwilson/memory-map/internal/platform/http/middleware"
 )
 
 func (h *Handler) CreateDeck(w http.ResponseWriter, r *http.Request) {
@@ -31,4 +32,80 @@ func (h *Handler) CreateDeck(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(deck)
+}
+
+func (h *Handler) GetDeckById(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "missing deck id", http.StatusBadRequest)
+		return
+	}
+
+	deck, err := h.deckService.GetDeckById(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(deck)
+}
+
+func (h *Handler) GetUserDecks(w http.ResponseWriter, r *http.Request) {
+	userID := r.Header.Get(string(middleware.UserIDKey))
+	if userID == "" {
+		http.Error(w, "missing user id", http.StatusBadRequest)
+		return
+	}
+
+	decks, err := h.deckService.GetUserDecks(r.Context(), userID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(decks)
+}
+
+func (h *Handler) UpdateDeck(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "missing deck id", http.StatusBadRequest)
+		return
+	}
+
+	var req struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.deckService.UpdateDeck(r.Context(), id, req.Name, req.Description)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *Handler) DeleteDeck(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	if id == "" {
+		http.Error(w, "missing deck id", http.StatusBadRequest)
+		return
+	}
+
+	err := h.deckService.DeleteDeck(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

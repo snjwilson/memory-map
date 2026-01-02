@@ -11,7 +11,9 @@ import (
 	"github.com/snjwilson/memory-map/internal/core/card"
 	"github.com/snjwilson/memory-map/internal/core/deck"
 	"github.com/snjwilson/memory-map/internal/core/study"
+	"github.com/snjwilson/memory-map/internal/core/user"
 	httpHandler "github.com/snjwilson/memory-map/internal/platform/http"
+	"github.com/snjwilson/memory-map/internal/platform/http/middleware"
 	"github.com/snjwilson/memory-map/internal/platform/postgres"
 )
 
@@ -27,19 +29,35 @@ func main() {
 	deckRepo := postgres.NewDeckRepository(db)
 	cardRepo := postgres.NewCardRepository(db)
 	reviewRepo := postgres.NewReviewRepository(db)
+	userRepo := postgres.NewUserRepository(db)
 
 	// Inject into services
 	deckService := deck.NewService(deckRepo)
 	deckAdapter := adapters.DeckServiceAdapter{Service: deckService}
 	cardService := card.NewService(cardRepo, &deckAdapter)
 	studyService := study.NewService(reviewRepo, cardRepo)
+	userService := user.NewService(userRepo)
 
-	h := httpHandler.NewHandler(deckService, cardService, studyService)
+	h := httpHandler.NewHandler(deckService, cardService, studyService, userService)
 	mux := http.NewServeMux()
 
-	// Routes
-	mux.HandleFunc("POST /decks", h.CreateDeck)
+	// Public Routes
+	mux.HandleFunc("POST /signup", h.HandleSignUp)
+	mux.HandleFunc("POST /login", h.HandleLogin)
+
+	// Protected Routes
+
+	// Deck Routes
+	mux.Handle("GET /decks/:id", middleware.Auth(http.HandlerFunc(h.GetDeckById)))
+	mux.Handle("GET /decks/user", middleware.Auth(http.HandlerFunc(h.GetUserDecks)))
+	mux.Handle("POST /decks", middleware.Auth(http.HandlerFunc(h.CreateDeck)))
+	mux.Handle("PUT /decks", middleware.Auth(http.HandlerFunc(h.UpdateDeck)))
+	mux.Handle("DELETE /decks/:id", middleware.Auth(http.HandlerFunc(h.DeleteDeck)))
+
+	// Card Routes
 	mux.HandleFunc("GET /cards/due", h.GetDueCards)
+
+	// Study Routes
 	mux.HandleFunc("POST /reviews", h.SubmitReview)
 
 	server := &http.Server{

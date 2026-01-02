@@ -77,3 +77,7 @@ func (s *Service) UpdateDeck(ctx context.Context, id string, name string, descri
 	// 3. Save
 	return s.repo.Update(ctx, existing)
 }
+
+func (s *Service) DeleteDeck(ctx context.Context, id string) error {
+	return s.repo.Delete(ctx, id)
+}
