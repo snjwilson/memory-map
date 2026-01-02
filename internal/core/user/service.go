@@ -28,6 +28,8 @@ func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (*User, error) 
 	now := time.Now().UTC()
 	u := &User{
 		ID:           uuid.New().String(),
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
 		Email:        req.Email,
 		PasswordHash: string(hashedPassword),
 		CreatedAt:    now,
@@ -43,8 +45,8 @@ func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (*User, error) 
 	return u, nil
 }
 
-// Authenticate verifies credentials (used for Login)
-func (s *Service) Authenticate(ctx context.Context, email, password string) (*User, error) {
+// Login verifies credentials
+func (s *Service) Login(ctx context.Context, email, password string) (*User, error) {
 	u, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, ErrInvalidCredentials
