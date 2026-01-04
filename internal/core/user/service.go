@@ -16,8 +16,8 @@ func NewService(repo Repository) *Service {
 	return &Service{repo: repo}
 }
 
-// SignUp handles new user registration
-func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (*User, error) {
+// SignUp handles new user registration and returns an auth token
+func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (*AuthToken, error) {
 	// 1. Hash the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -42,11 +42,17 @@ func (s *Service) SignUp(ctx context.Context, req SignUpRequest) (*User, error) 
 		return nil, err
 	}
 
-	return u, nil
+	// 4. Generate JWT token
+	token, err := GenerateToken(u)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthToken{User: u, Token: token}, nil
 }
 
-// Login verifies credentials
-func (s *Service) Login(ctx context.Context, email, password string) (*User, error) {
+// Login verifies credentials and returns an auth token
+func (s *Service) Login(ctx context.Context, email, password string) (*AuthToken, error) {
 	u, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, ErrInvalidCredentials
@@ -58,5 +64,11 @@ func (s *Service) Login(ctx context.Context, email, password string) (*User, err
 		return nil, ErrInvalidCredentials
 	}
 
-	return u, nil
+	// Generate JWT token
+	token, err := GenerateToken(u)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthToken{User: u, Token: token}, nil
 }
