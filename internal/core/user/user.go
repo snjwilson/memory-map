@@ -24,8 +24,8 @@ type User struct {
 
 // SignUpRequest is the input for creating a new account
 type SignUpRequest struct {
-	FirstName string
-	LastName  string
-	Email     string
-	Password  string
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Email     string `json:"email"`
+	Password  string `json:"password"`
 }
