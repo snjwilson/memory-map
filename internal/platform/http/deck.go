@@ -52,9 +52,11 @@ func (h *Handler) GetDeckById(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetUserDecks(w http.ResponseWriter, r *http.Request) {
-	userID := r.Header.Get(string(middleware.UserIDKey))
-	if userID == "" {
-		http.Error(w, "missing user id", http.StatusBadRequest)
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDVal.(string)
+
+	if !ok {
+		http.Error(w, "missing user id in context", http.StatusBadRequest)
 		return
 	}
 
