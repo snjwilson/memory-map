@@ -24,8 +24,8 @@ func (r *DeckRepository) Create(ctx context.Context, d *deck.Deck) error {
 
 func (r *DeckRepository) GetByID(ctx context.Context, id string) (*deck.Deck, error) {
 	d := &deck.Deck{}
-	query := `SELECT id, owner_id, name, description, is_public FROM decks WHERE id = $1`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic)
+	query := `SELECT id, owner_id, name, description, is_public, created_at, updated_at FROM decks WHERE id = $1`
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CreatedAt, &d.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, deck.ErrDeckNotFound
 	}
@@ -33,7 +33,7 @@ func (r *DeckRepository) GetByID(ctx context.Context, id string) (*deck.Deck, er
 }
 
 func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string) ([]*deck.Deck, error) {
-	query := `SELECT id, owner_id, name, description, is_public FROM decks WHERE owner_id = $1`
+	query := `SELECT id, owner_id, name, description, is_public, created_at, updated_at FROM decks WHERE owner_id = $1`
 	rows, err := r.db.QueryContext(ctx, query, ownerId)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string) ([]*de
 	result := []*deck.Deck{}
 	for rows.Next() {
 		d := &deck.Deck{}
-		err := rows.Scan(&d.ID, &d.OwnerID, &d.Name, &d.IsPublic)
+		err := rows.Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CreatedAt, &d.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
