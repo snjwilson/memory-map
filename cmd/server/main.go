@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	db, err := sql.Open("pgx", "postgres://postgres:@localhost:5432/dbname=memorymap?sslmode=disable")
+	db, err := sql.Open("pgx", "postgres://postgres:@localhost:5432/memorymap?sslmode=disable")
 	if err != nil {
 		fmt.Printf("Error connecting to DB - %v\n", err.Error())
 		os.Exit(1)
@@ -41,6 +41,9 @@ func main() {
 	h := httpHandler.NewHandler(deckService, cardService, studyService, userService)
 	mux := http.NewServeMux()
 
+	// Apply CORS middleware to all routes
+	corsHandler := middleware.CORS(mux)
+
 	// Public Routes
 	mux.HandleFunc("POST /signup", h.HandleSignUp)
 	mux.HandleFunc("POST /login", h.HandleLogin)
@@ -58,16 +61,16 @@ func main() {
 	mux.Handle("POST /cards", middleware.Auth(http.HandlerFunc(h.CreateCard)))
 	mux.Handle("GET /decks/:id/cards", middleware.Auth(http.HandlerFunc(h.GetDeckCards)))
 	mux.Handle("GET /cards/:id", middleware.Auth(http.HandlerFunc(h.GetCard)))
-	mux.Handle("PUT /cards/:id", middleware.Auth(http.HandlerFunc(h.UpdateCard)))
+	mux.Handle("PUT /cards", middleware.Auth(http.HandlerFunc(h.UpdateCard)))
 	mux.Handle("DELETE /cards/:id", middleware.Auth(http.HandlerFunc(h.DeleteCard)))
 
 	// Study Routes
-	mux.Handle("GET /study/due?deck_id={id}", middleware.Auth(http.HandlerFunc(h.GetDueCards)))
+	mux.Handle("GET /study/due", middleware.Auth(http.HandlerFunc(h.GetDueCards)))
 	mux.Handle("POST study/review", middleware.Auth(http.HandlerFunc(h.SubmitReview)))
 
 	server := &http.Server{
 		Addr:    ":8080",
-		Handler: mux,
+		Handler: corsHandler,
 	}
 	fmt.Println("Initializing the server...")
 	server.ListenAndServe()
