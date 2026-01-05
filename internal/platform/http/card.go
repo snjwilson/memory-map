@@ -9,11 +9,7 @@ import (
 
 // CreateCard handles POST /cards
 func (h *Handler) CreateCard(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		DeckID string `json:"deck_id"`
-		Front  string `json:"front"`
-		Back   string `json:"back"`
-	}
+	var req card.NewCardRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
@@ -81,22 +77,13 @@ func (h *Handler) GetCard(w http.ResponseWriter, r *http.Request) {
 
 // UpdateCard handles PUT /cards/{id}
 func (h *Handler) UpdateCard(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	if id == "" {
-		http.Error(w, "missing card id", http.StatusBadRequest)
-		return
-	}
-
-	var req struct {
-		Front string `json:"front"`
-		Back  string `json:"back"`
-	}
+	var req card.NewCardRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.cardService.UpdateCard(r.Context(), id, req.Front, req.Back); err != nil {
+	if err := h.cardService.UpdateCard(r.Context(), req.DeckID, req.Front, req.Back); err != nil {
 		if err == card.ErrInvalidContent {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
