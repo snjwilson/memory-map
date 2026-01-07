@@ -9,9 +9,9 @@ import (
 
 // GetDueCards fetches the cards the user needs to study right now
 func (h *Handler) GetDueCards(w http.ResponseWriter, r *http.Request) {
-	deckID := r.URL.Query().Get("deck_id")
+	deckID := r.PathValue("deckId")
 	if deckID == "" {
-		http.Error(w, "deck_id is required", http.StatusBadRequest)
+		http.Error(w, "deck id is required", http.StatusBadRequest)
 		return
 	}
 
@@ -28,9 +28,9 @@ func (h *Handler) GetDueCards(w http.ResponseWriter, r *http.Request) {
 // SubmitReview processes the answer
 func (h *Handler) SubmitReview(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		CardID     string       `json:"card_id"`
+		CardID     string       `json:"cardId"`
 		Rating     study.Rating `json:"rating"` // 1-4
-		DurationMs int          `json:"duration_ms"`
+		DurationMs int          `json:"durationMs"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

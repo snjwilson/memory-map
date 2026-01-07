@@ -9,22 +9,24 @@ import (
 )
 
 func (h *Handler) CreateDeck(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		Name        string `json:"name"`
-		Description string `json:"description"`
-		OwnerID     string `json:"owner_id"` // In production, get this from JWT context
-	}
+	var req deck.NewDeckRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	deck, err := h.deckService.CreateDeck(r.Context(), deck.NewDeckRequest{
-		Name:        req.Name,
-		Description: req.Description,
-		OwnerID:     req.OwnerID,
-	})
+	userIDVal := r.Context().Value(middleware.UserIDKey)
+	userID, ok := userIDVal.(string)
+
+	if !ok {
+		http.Error(w, "missing user id in context", http.StatusBadRequest)
+		return
+	}
+
+	req.OwnerID = userID
+
+	deck, err := h.deckService.CreateDeck(r.Context(), req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

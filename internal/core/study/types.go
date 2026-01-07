@@ -18,12 +18,12 @@ const (
 // This is crucial for analytics (e.g., "Heatmap" or "Cards Learned per Day")
 type ReviewLog struct {
 	ID         string    `json:"id"`
-	CardID     string    `json:"card_id"`
+	CardID     string    `json:"cardId"`
 	Rating     Rating    `json:"rating"`
-	ReviewTime time.Time `json:"review_time"` // When it happened
-	DurationMs int       `json:"duration_ms"` // How long they took to answer
+	ReviewTime time.Time `json:"reviewTime"` // When it happened
+	DurationMs int       `json:"durationMs"` // How long they took to answer
 
 	// Snapshot of state *after* the review (optional, but helpful for debugging)
-	NewInterval int     `json:"new_interval"`
-	NewEase     float64 `json:"new_ease"`
+	NewInterval int     `json:"newInterval"`
+	NewEase     float64 `json:"newEase"`
 }

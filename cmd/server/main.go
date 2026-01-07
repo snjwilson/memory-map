@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -18,12 +19,20 @@ import (
 )
 
 func main() {
+	// 1. Initialize a JSON logger (Standard for backends)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+
 	db, err := sql.Open("pgx", "postgres://postgres:@localhost:5432/memorymap?sslmode=disable")
 	if err != nil {
 		fmt.Printf("Error connecting to DB - %v\n", err.Error())
 		os.Exit(1)
 	}
 	defer db.Close()
+	slog.Info("DB started",
+		"port", 5432,
+		"env", "development",
+	)
 
 	// Wire up the infrastructure
 	deckRepo := postgres.NewDeckRepository(db)
@@ -41,37 +50,43 @@ func main() {
 	h := httpHandler.NewHandler(deckService, cardService, studyService, userService)
 	mux := http.NewServeMux()
 
-	// Apply CORS middleware to all routes
-	corsHandler := middleware.CORS(mux)
-
 	// Public Routes
 	mux.HandleFunc("POST /signup", h.HandleSignUp)
 	mux.HandleFunc("POST /login", h.HandleLogin)
 
 	// Protected Routes
 
-	// Deck Routes
-	mux.Handle("GET /decks/:id", middleware.Auth(http.HandlerFunc(h.GetDeckById)))
-	mux.Handle("GET /decks/user", middleware.Auth(http.HandlerFunc(h.GetUserDecks)))
-	mux.Handle("POST /decks", middleware.Auth(http.HandlerFunc(h.CreateDeck)))
-	mux.Handle("PUT /decks", middleware.Auth(http.HandlerFunc(h.UpdateDeck)))
-	mux.Handle("DELETE /decks/:id", middleware.Auth(http.HandlerFunc(h.DeleteDeck)))
-
 	// Card Routes
 	mux.Handle("POST /cards", middleware.Auth(http.HandlerFunc(h.CreateCard)))
-	mux.Handle("GET /decks/:id/cards", middleware.Auth(http.HandlerFunc(h.GetDeckCards)))
-	mux.Handle("GET /cards/:id", middleware.Auth(http.HandlerFunc(h.GetCard)))
+	mux.Handle("GET /decks/{id}/cards", middleware.Auth(http.HandlerFunc(h.GetDeckCards)))
+	mux.Handle("GET /cards/{id}", middleware.Auth(http.HandlerFunc(h.GetCard)))
 	mux.Handle("PUT /cards", middleware.Auth(http.HandlerFunc(h.UpdateCard)))
-	mux.Handle("DELETE /cards/:id", middleware.Auth(http.HandlerFunc(h.DeleteCard)))
+	mux.Handle("DELETE /cards/{id}", middleware.Auth(http.HandlerFunc(h.DeleteCard)))
+
+	// Deck Routes
+	mux.Handle("GET /decks/{id}", middleware.Auth(http.HandlerFunc(h.GetDeckById)))
+	mux.Handle("GET /decks", middleware.Auth(http.HandlerFunc(h.GetUserDecks)))
+	mux.Handle("POST /decks", middleware.Auth(http.HandlerFunc(h.CreateDeck)))
+	mux.Handle("PUT /decks", middleware.Auth(http.HandlerFunc(h.UpdateDeck)))
+	mux.Handle("DELETE /decks/{id}", middleware.Auth(http.HandlerFunc(h.DeleteDeck)))
 
 	// Study Routes
-	mux.Handle("GET /study/due", middleware.Auth(http.HandlerFunc(h.GetDueCards)))
-	mux.Handle("POST study/review", middleware.Auth(http.HandlerFunc(h.SubmitReview)))
+	mux.Handle("GET /study/{deckId}/due", middleware.Auth(http.HandlerFunc(h.GetDueCards)))
+	mux.Handle("POST /study/review", middleware.Auth(http.HandlerFunc(h.SubmitReview)))
+
+	// Add logging middlerware
+	loggerMux := middleware.LoggingMiddleware(mux)
+
+	// Apply CORS middleware to all routes
+	corsHandler := middleware.CORS(loggerMux)
 
 	server := &http.Server{
 		Addr:    ":8080",
 		Handler: corsHandler,
 	}
-	fmt.Println("Initializing the server...")
+	slog.Info("Server started",
+		"port", 8080,
+		"env", "development",
+	)
 	server.ListenAndServe()
 }

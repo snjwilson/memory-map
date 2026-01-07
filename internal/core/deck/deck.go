@@ -14,18 +14,18 @@ var (
 // Deck represents a collection of cards
 type Deck struct {
 	ID          string    `json:"id"`
-	OwnerID     string    `json:"owner_id"`
+	OwnerID     string    `json:"ownerId"`
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
-	IsPublic    bool      `json:"is_public"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	IsPublic    bool      `json:"isPublic"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
 // NewDeckRequest defines the data needed to create a deck
 type NewDeckRequest struct {
-	OwnerID     string
-	Name        string
-	Description string
-	IsPublic    bool
+	OwnerID     string `json:"ownerId"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	IsPublic    bool   `json:"isPublic"`
 }
