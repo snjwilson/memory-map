@@ -8,10 +8,9 @@ import (
 type Rating int
 
 const (
-	RatingAgain Rating = 1 // Complete blackout, need to see immediately
-	RatingHard  Rating = 2 // Remembered, but with great difficulty
-	RatingGood  Rating = 3 // Correct response with some hesitation
-	RatingEasy  Rating = 4 // Perfect recall
+	RatingAgain Rating = 1 // Wrong
+	RatingHard  Rating = 2 // Correct, but tough
+	RatingEasy  Rating = 3 // Correct, easy
 )
 
 // ReviewLog records a single practice event.

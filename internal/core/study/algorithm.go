@@ -9,26 +9,30 @@ type ScheduledResult struct {
 	Repetitions int     // Consecutive successful reviews
 }
 
-// CalculateNextReview applies the SM-2 algorithm.
-// currentInterval: days since last review
-// currentEase: the card's "stickiness" (starts at 2.5)
-// repetitions: consecutive successes
-// rating: 1 (Again), 2 (Hard), 3 (Good), 4 (Easy)
 func CalculateNextReview(currentInterval int, currentEase float64, repetitions int, rating Rating) ScheduledResult {
+	// Handle "Again" (Fail)
 	if rating == RatingAgain {
 		return ScheduledResult{
-			Interval:    0,           // Reset to 0 days (show again today/tomorrow)
-			EaseFactor:  currentEase, // Don't punish ease too much on lapses
-			Repetitions: 0,           // Reset streak
+			Interval:    1,                               // Show again in 1 day
+			EaseFactor:  math.Max(1.3, currentEase-0.20), // Slightly penalize ease on fail
+			Repetitions: 0,
 		}
 	}
 
-	// 1. Update Ease Factor
-	// Formula: EF' = EF + (0.1 - (5-q) * (0.08 + (5-q)*0.02))
-	// q = rating
-	newEase := currentEase + (0.1 - (5.0-float64(rating))*(0.08+(5.0-float64(rating))*0.02))
+	// Map your 1-3 scale to the SM-2 3-5 scale logic
+	// Frontend 2 (Hard) -> SM-2 3 (Difficult but correct)
+	// Frontend 3 (Easy) -> SM-2 5 (Perfect recall)
+	var sm2Weight float64
+	if rating == RatingHard {
+		sm2Weight = 3.0
+	} else {
+		sm2Weight = 5.0 // RatingEasy
+	}
+
+	// 1. Update Ease Factor using the mapped weight
+	newEase := currentEase + (0.1 - (5.0-sm2Weight)*(0.08+(5.0-sm2Weight)*0.02))
 	if newEase < 1.3 {
-		newEase = 1.3 // Minimum floor
+		newEase = 1.3
 	}
 
 	// 2. Update Repetitions
@@ -41,8 +45,7 @@ func CalculateNextReview(currentInterval int, currentEase float64, repetitions i
 	} else if newRepetitions == 2 {
 		newInterval = 6
 	} else {
-		// Interval[n] = Interval[n-1] * EaseFactor
-		newInterval = int(math.Round(float64(currentInterval) * newEase))
+		newInterval = int(math.Ceil(float64(currentInterval) * newEase))
 	}
 
 	return ScheduledResult{
