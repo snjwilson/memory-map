@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/snjwilson/memory-map/internal/core/study"
@@ -27,24 +28,22 @@ func (h *Handler) GetDueCards(w http.ResponseWriter, r *http.Request) {
 
 // SubmitReview processes the answer
 func (h *Handler) SubmitReview(w http.ResponseWriter, r *http.Request) {
-	var req struct {
-		CardID     string       `json:"cardId"`
-		Rating     study.Rating `json:"rating"` // 1-4
-		DurationMs int          `json:"durationMs"`
-	}
+	var req study.StudySessionReviewRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request", http.StatusBadRequest)
+		slog.Error("JSON decode failure", "error", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	updatedCard, err := h.studyService.SubmitReview(r.Context(), req.CardID, req.Rating, req.DurationMs)
+	// Pass the slice of reviews to the service
+	updatedCards, err := h.studyService.ProcessReview(r.Context(), req.Reviews)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "failed to process reviews", http.StatusInternalServerError)
 		return
 	}
 
-	// Return the updated card so the UI knows the next DueDate
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(updatedCard)
+	// Return the list of updated cards
+	json.NewEncoder(w).Encode(updatedCards)
 }

@@ -2,6 +2,7 @@ package study
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,8 +21,27 @@ func NewService(reviewRepo ReviewRepository, cardRepo card.Repository) *Service 
 	}
 }
 
+// ProcessReview handles multiple cards at once
+func (s *Service) ProcessReview(ctx context.Context, reviews []Review) ([]*card.Card, error) {
+	var updatedCards []*card.Card
+
+	for _, r := range reviews {
+		// We reuse your existing logic for each card
+		updated, err := s.SubmitReview(ctx, r.CardID, r.Rating, r.Timestamp)
+		if err != nil {
+			// Log the error but keep processing other cards?
+			// Or stop entirely? Usually, we log and continue.
+			slog.Error("failed to process card review", "card_id", r.CardID, "error", err)
+			continue
+		}
+		updatedCards = append(updatedCards, updated)
+	}
+
+	return updatedCards, nil
+}
+
 // SubmitReview processes a user's answer and updates the card
-func (s *Service) SubmitReview(ctx context.Context, cardID string, rating Rating, durationMs int) (*card.Card, error) {
+func (s *Service) SubmitReview(ctx context.Context, cardID string, rating Rating, timestamp int64) (*card.Card, error) {
 	// 1. Fetch the Card
 	card, err := s.cardRepo.GetByID(ctx, cardID)
 	if err != nil {
@@ -51,8 +71,7 @@ func (s *Service) SubmitReview(ctx context.Context, cardID string, rating Rating
 		ID:          uuid.New().String(),
 		CardID:      card.ID,
 		Rating:      rating,
-		ReviewTime:  time.Now().UTC(),
-		DurationMs:  durationMs,
+		ReviewTime:  time.UnixMilli(timestamp).UTC(),
 		NewInterval: result.Interval,
 		NewEase:     result.EaseFactor,
 	}

@@ -26,3 +26,13 @@ type ReviewLog struct {
 	NewInterval int     `json:"newInterval"`
 	NewEase     float64 `json:"newEase"`
 }
+
+type Review struct {
+	CardID    string `json:"cardId"`
+	Rating    Rating `json:"grade"` // 1-3
+	Timestamp int64  `json:"timestamp"`
+}
+
+type StudySessionReviewRequest struct {
+	Reviews []Review `json:"reviews"` // Changed to a slice
+}
