@@ -32,3 +32,7 @@ clean:
 
 help:
 	@echo "Available targets: build run test fmt vet tidy lint clean"
+
+## migration: Create a new migration file (usage: make migration name=add_tags)
+migration:
+	migrate create -ext sql -dir migrations -seq $(name)
