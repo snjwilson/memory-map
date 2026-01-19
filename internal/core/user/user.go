@@ -14,18 +14,18 @@ var (
 // User represents a student using the application
 type User struct {
 	ID           string    `json:"id"`
-	FirstName    string    `json:"first_name"`
-	LastName     string    `json:"last_name"`
+	FirstName    string    `json:"firstName"`
+	LastName     string    `json:"lastName"`
 	Email        string    `json:"email"`
 	PasswordHash string    `json:"-"` // Hidden from JSON
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	CreatedAt    time.Time `json:"createdAt"`
+	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
 // SignUpRequest is the input for creating a new account
 type SignUpRequest struct {
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 }

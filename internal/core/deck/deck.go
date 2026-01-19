@@ -18,6 +18,7 @@ type Deck struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description"`
 	IsPublic    bool      `json:"isPublic"`
+	CardCount   int       `db:"card_count" json:"cardCount"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
