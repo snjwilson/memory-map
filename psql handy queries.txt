@@ -64,3 +64,13 @@ CREATE TABLE review_logs (
 
 CREATE INDEX idx_review_logs_card_id ON review_logs(card_id);
 CREATE INDEX idx_review_logs_review_time ON review_logs(review_time);
+
+
+3. Analytics Power-Moves (SQL Queries)
+Because of the way we structured this table, you can now run some very powerful "Goldman-level" analytics queries with ease:
+
+Total Time Studied: SELECT SUM(duration_ms) / 1000 / 60 as minutes_studied FROM review_logs;
+
+Daily Review Count (Heatmap data): SELECT DATE_TRUNC('day', review_time) as day, COUNT(*) FROM review_logs GROUP BY day;
+
+Retention Rate: SELECT rating, COUNT(*) * 100.0 / SUM(COUNT(*)) OVER() as percentage FROM review_logs GROUP BY rating;
