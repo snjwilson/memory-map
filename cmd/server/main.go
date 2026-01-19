@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
@@ -23,7 +24,19 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
-	db, err := sql.Open("pgx", "postgres://postgres:@localhost:5432/memorymap?sslmode=disable")
+	dbUrl := os.Getenv("DB_URL")
+	if dbUrl == "" {
+		dbUrl = "postgres://postgres:@localhost:5432/memorymap?sslmode=disable"
+	}
+
+	// Run migrations before starting the server
+	// This will block until migrations succeed or max retries are hit
+	err := postgres.RunMigrationsWithRetry(dbUrl)
+	if err != nil {
+		log.Fatalf("Could not run migrations: %v", err)
+	}
+
+	db, err := sql.Open("pgx", dbUrl)
 	if err != nil {
 		fmt.Printf("Error connecting to DB - %v\n", err.Error())
 		os.Exit(1)
