@@ -16,16 +16,16 @@ func NewDeckRepository(db *sql.DB) *DeckRepository {
 }
 
 func (r *DeckRepository) Create(ctx context.Context, d *deck.Deck) error {
-	query := `INSERT INTO decks (id, owner_id, name, description, is_public, created_at, updated_at) 
-              VALUES ($1, $2, $3, $4, $5, $6, $7)`
-	_, err := r.db.ExecContext(ctx, query, d.ID, d.OwnerID, d.Name, d.Description, d.IsPublic, d.CreatedAt, d.UpdatedAt)
+	query := `INSERT INTO decks (id, owner_id, name, description, is_public, card_count, created_at, updated_at) 
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
+	_, err := r.db.ExecContext(ctx, query, d.ID, d.OwnerID, d.Name, d.Description, d.IsPublic, d.CardCount, d.CreatedAt, d.UpdatedAt)
 	return err
 }
 
 func (r *DeckRepository) GetByID(ctx context.Context, id string) (*deck.Deck, error) {
 	d := &deck.Deck{}
-	query := `SELECT id, owner_id, name, description, is_public, created_at, updated_at FROM decks WHERE id = $1`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CreatedAt, &d.UpdatedAt)
+	query := `SELECT id, owner_id, name, description, is_public, card_count, created_at, updated_at FROM decks WHERE id = $1`
+	err := r.db.QueryRowContext(ctx, query, id).Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CardCount, &d.CreatedAt, &d.UpdatedAt)
 	if err == sql.ErrNoRows {
 		return nil, deck.ErrDeckNotFound
 	}
@@ -33,7 +33,7 @@ func (r *DeckRepository) GetByID(ctx context.Context, id string) (*deck.Deck, er
 }
 
 func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string) ([]*deck.Deck, error) {
-	query := `SELECT id, owner_id, name, description, is_public, created_at, updated_at FROM decks WHERE owner_id = $1`
+	query := `SELECT id, owner_id, name, description, is_public, card_count, created_at, updated_at FROM decks WHERE owner_id = $1`
 	rows, err := r.db.QueryContext(ctx, query, ownerId)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string) ([]*de
 	result := []*deck.Deck{}
 	for rows.Next() {
 		d := &deck.Deck{}
-		err := rows.Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CreatedAt, &d.UpdatedAt)
+		err := rows.Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CardCount, &d.CreatedAt, &d.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}

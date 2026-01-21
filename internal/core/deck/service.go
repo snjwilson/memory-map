@@ -34,6 +34,7 @@ func (s *Service) CreateDeck(ctx context.Context, req NewDeckRequest) (*Deck, er
 		Name:        req.Name,
 		Description: req.Description,
 		IsPublic:    req.IsPublic,
+		CardCount:   0,
 		CreatedAt:   now,
 		UpdatedAt:   now,
 	}
