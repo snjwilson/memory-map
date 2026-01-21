@@ -11,7 +11,7 @@ FROM alpine:latest
 WORKDIR /root/
 # Copy the binary from the builder stage
 COPY --from=builder /app/main .
-# Copy migrations if you have them
+# Copy migrations
 COPY --from=builder /app/migrations ./migrations 
 
 EXPOSE 8080
