@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/snjwilson/memory-map/internal/core/card"
 )
@@ -43,7 +44,17 @@ func (h *Handler) GetDeckCards(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cards, err := h.cardService.GetByDeckId(r.Context(), deckID)
+	query := r.URL.Query()
+	page, _ := strconv.Atoi(query.Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	if limit < 1 || limit > 100 {
+		limit = 10 // Default items per page
+	}
+
+	cards, err := h.cardService.GetByDeckId(r.Context(), deckID, page, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

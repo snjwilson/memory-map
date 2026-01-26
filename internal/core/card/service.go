@@ -68,17 +68,17 @@ func (s *Service) CreateCard(ctx context.Context, req NewCardRequest) (*Card, er
 }
 
 // GetDueCards is used when the user hits "Study"
-func (s *Service) GetDueCards(ctx context.Context, deckID string) ([]*Card, error) {
+func (s *Service) GetDueCards(ctx context.Context, deckID string, page, limit int) ([]*Card, error) {
 	// We might limit the batch size here (e.g., fetch 20 at a time)
-	return s.repo.GetDueCards(ctx, deckID, 20)
+	return s.repo.GetDueCards(ctx, deckID, page, limit)
 }
 
 func (s *Service) GetById(ctx context.Context, id string) (*Card, error) {
 	return s.repo.GetByID(ctx, id)
 }
 
-func (s *Service) GetByDeckId(ctx context.Context, deckId string) ([]*Card, error) {
-	return s.repo.GetByDeckID(ctx, deckId)
+func (s *Service) GetByDeckId(ctx context.Context, deckId string, page, limit int) ([]*Card, error) {
+	return s.repo.GetByDeckID(ctx, deckId, page, limit)
 }
 
 // UpdateCard edits the front/back content of a card

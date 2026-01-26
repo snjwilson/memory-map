@@ -4,19 +4,30 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	"github.com/snjwilson/memory-map/internal/core/study"
 )
 
-// GetDueCards fetches the cards the user needs to study right now
-func (h *Handler) GetDueCards(w http.ResponseWriter, r *http.Request) {
+// GetDeckDueCards fetches the cards the user needs to study right now
+func (h *Handler) GetDeckDueCards(w http.ResponseWriter, r *http.Request) {
 	deckID := r.PathValue("deckId")
 	if deckID == "" {
 		http.Error(w, "deck id is required", http.StatusBadRequest)
 		return
 	}
 
-	cards, err := h.cardService.GetDueCards(r.Context(), deckID)
+	query := r.URL.Query()
+	page, _ := strconv.Atoi(query.Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	if limit < 1 || limit > 100 {
+		limit = 10 // Default items per page
+	}
+
+	cards, err := h.cardService.GetDueCards(r.Context(), deckID, page, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

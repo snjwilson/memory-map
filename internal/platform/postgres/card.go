@@ -17,14 +17,15 @@ func NewCardRepository(db *sql.DB) *CardRepository {
 }
 
 // GetDueCards finds cards that are ready for review
-func (r *CardRepository) GetDueCards(ctx context.Context, deckID string, limit int) ([]*card.Card, error) {
+func (r *CardRepository) GetDueCards(ctx context.Context, deckID string, page, limit int) ([]*card.Card, error) {
+	offset := (page - 1) * limit
 	query := `SELECT id, deck_id, front, back, interval, ease_factor, repetitions, due_date 
               FROM cards 
               WHERE deck_id = $1 AND due_date <= $2 
               ORDER BY due_date ASC 
-              LIMIT $3`
+              LIMIT $3 OFFSET $4`
 
-	rows, err := r.db.QueryContext(ctx, query, deckID, time.Now().UTC(), limit)
+	rows, err := r.db.QueryContext(ctx, query, deckID, time.Now().UTC(), limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -62,9 +63,10 @@ func (r *CardRepository) GetByID(ctx context.Context, id string) (*card.Card, er
 }
 
 // GetByDeckID retrieves all cards in a deck (for management view)
-func (r *CardRepository) GetByDeckID(ctx context.Context, deckID string) ([]*card.Card, error) {
-	query := `SELECT id, deck_id, front, back, interval, ease_factor, repetitions, due_date FROM cards WHERE deck_id = $1`
-	rows, err := r.db.QueryContext(ctx, query, deckID)
+func (r *CardRepository) GetByDeckID(ctx context.Context, deckID string, page, limit int) ([]*card.Card, error) {
+	offset := (page - 1) * limit
+	query := `SELECT id, deck_id, front, back, interval, ease_factor, repetitions, due_date FROM cards WHERE deck_id = $1 LIMIT $2 OFFSET $3`
+	rows, err := r.db.QueryContext(ctx, query, deckID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -85,8 +87,7 @@ func (r *CardRepository) GetByDeckID(ctx context.Context, deckID string) ([]*car
 // Update is used to save the new Interval/EaseFactor after a study session
 func (r *CardRepository) Update(ctx context.Context, c *card.Card) error {
 	query := `UPDATE cards SET 
-                front = $1, back = $2, interval = $3, 
-                ease_factor = $4, repetitions = $5, due_date = $6, updated_at = $7 
+              front = $1, back = $2, interval = $3, ease_factor = $4, repetitions = $5, due_date = $6, updated_at = $7 
               WHERE id = $8`
 	_, err := r.db.ExecContext(ctx, query,
 		c.Front, c.Back, c.Interval,

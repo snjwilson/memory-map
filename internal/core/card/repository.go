@@ -12,10 +12,10 @@ type Repository interface {
 	GetByID(ctx context.Context, id string) (*Card, error)
 
 	// GetByDeckID retrieves all cards in a deck (for management view)
-	GetByDeckID(ctx context.Context, deckID string) ([]*Card, error)
+	GetByDeckID(ctx context.Context, deckID string, page, limit int) ([]*Card, error)
 
 	// GetDueCards retrieves cards where DueDate <= Now (for study session)
-	GetDueCards(ctx context.Context, deckID string, limit int) ([]*Card, error)
+	GetDueCards(ctx context.Context, deckID string, page, limit int) ([]*Card, error)
 
 	// Update saves changes (content edits OR algorithm updates)
 	Update(ctx context.Context, card *Card) error

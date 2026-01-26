@@ -84,7 +84,7 @@ func main() {
 	mux.Handle("DELETE /decks/{id}", middleware.Auth(http.HandlerFunc(h.DeleteDeck)))
 
 	// Study Routes
-	mux.Handle("GET /study/{deckId}/due", middleware.Auth(http.HandlerFunc(h.GetDueCards)))
+	mux.Handle("GET /study/{deckId}/due", middleware.Auth(http.HandlerFunc(h.GetDeckDueCards)))
 	mux.Handle("POST /study/review", middleware.Auth(http.HandlerFunc(h.SubmitReview)))
 
 	// Add logging middlerware
