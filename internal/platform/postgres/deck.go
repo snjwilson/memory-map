@@ -32,9 +32,10 @@ func (r *DeckRepository) GetByID(ctx context.Context, id string) (*deck.Deck, er
 	return d, err
 }
 
-func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string) ([]*deck.Deck, error) {
-	query := `SELECT id, owner_id, name, description, is_public, card_count, created_at, updated_at FROM decks WHERE owner_id = $1`
-	rows, err := r.db.QueryContext(ctx, query, ownerId)
+func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string, page, limit int) ([]*deck.Deck, error) {
+	offset := (page - 1) * limit
+	query := `SELECT id, owner_id, name, description, is_public, card_count, created_at, updated_at FROM decks WHERE owner_id = $1 LIMIT $2 OFFSET $3`
+	rows, err := r.db.QueryContext(ctx, query, ownerId, limit, offset)
 	if err != nil {
 		return nil, err
 	}

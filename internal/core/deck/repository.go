@@ -14,7 +14,7 @@ type Repository interface {
 	GetByID(ctx context.Context, id string) (*Deck, error)
 
 	// ListByOwner retrieves all decks for a specific user
-	ListByOwner(ctx context.Context, ownerID string) ([]*Deck, error)
+	ListByOwner(ctx context.Context, ownerID string, page, limit int) ([]*Deck, error)
 
 	// Update modifies an existing deck
 	Update(ctx context.Context, deck *Deck) error

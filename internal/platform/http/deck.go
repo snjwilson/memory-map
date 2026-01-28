@@ -3,6 +3,7 @@ package http
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/snjwilson/memory-map/internal/core/deck"
 	"github.com/snjwilson/memory-map/internal/platform/http/middleware"
@@ -62,7 +63,17 @@ func (h *Handler) GetUserDecks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	decks, err := h.deckService.GetUserDecks(r.Context(), userID)
+	query := r.URL.Query()
+	page, _ := strconv.Atoi(query.Get("page"))
+	if page < 1 {
+		page = 1
+	}
+	limit, _ := strconv.Atoi(query.Get("limit"))
+	if limit < 1 || limit > 100 {
+		limit = 10 // Default items per page
+	}
+
+	decks, err := h.deckService.GetUserDecks(r.Context(), userID, page, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
