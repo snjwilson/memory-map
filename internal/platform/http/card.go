@@ -54,14 +54,30 @@ func (h *Handler) GetDeckCards(w http.ResponseWriter, r *http.Request) {
 		limit = 10 // Default items per page
 	}
 
-	cards, err := h.cardService.GetByDeckId(r.Context(), deckID, page, limit)
+	cards, totalCount, err := h.cardService.GetByDeckId(r.Context(), deckID, page, limit)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
+	totalPages := (totalCount + limit - 1) / limit
+
+	response := PagedResponse{
+		Data: cards,
+		Meta: Meta{
+			TotalCount: totalCount,
+			TotalPages: totalPages,
+			Page:       page,
+			Limit:      limit,
+		},
+	}
+
+	// 4. Send the Enveloped JSON
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(cards)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // GetCard handles GET /cards/{id}

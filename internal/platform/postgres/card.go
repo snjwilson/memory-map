@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/snjwilson/memory-map/internal/core/card"
@@ -17,8 +18,20 @@ func NewCardRepository(db *sql.DB) *CardRepository {
 }
 
 // GetDueCards finds cards that are ready for review
-func (r *CardRepository) GetDueCards(ctx context.Context, deckID string, page, limit int) ([]*card.Card, error) {
+func (r *CardRepository) GetDueCards(ctx context.Context, deckID string, page, limit int) ([]*card.Card, int, error) {
 	offset := (page - 1) * limit
+
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM cards WHERE deck_id = $1 AND due_date <= $2`
+	err := r.db.QueryRowContext(ctx, countQuery, deckID, time.Now().UTC()).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count due cards: %w", err)
+	}
+
+	if totalCount == 0 {
+		return []*card.Card{}, 0, nil
+	}
+
 	query := `SELECT id, deck_id, front, back, interval, ease_factor, repetitions, due_date 
               FROM cards 
               WHERE deck_id = $1 AND due_date <= $2 
@@ -27,7 +40,7 @@ func (r *CardRepository) GetDueCards(ctx context.Context, deckID string, page, l
 
 	rows, err := r.db.QueryContext(ctx, query, deckID, time.Now().UTC(), limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("failed to query due cards: %w", err)
 	}
 	defer rows.Close()
 
@@ -36,11 +49,11 @@ func (r *CardRepository) GetDueCards(ctx context.Context, deckID string, page, l
 		c := &card.Card{}
 		err := rows.Scan(&c.ID, &c.DeckID, &c.Front, &c.Back, &c.Interval, &c.EaseFactor, &c.Repetitions, &c.DueDate)
 		if err != nil {
-			return nil, err
+			return nil, 0, fmt.Errorf("failed to scan due cards: %w", err)
 		}
 		result = append(result, c)
 	}
-	return result, nil
+	return result, totalCount, nil
 }
 
 // Create saves a new card
@@ -63,12 +76,24 @@ func (r *CardRepository) GetByID(ctx context.Context, id string) (*card.Card, er
 }
 
 // GetByDeckID retrieves all cards in a deck (for management view)
-func (r *CardRepository) GetByDeckID(ctx context.Context, deckID string, page, limit int) ([]*card.Card, error) {
+func (r *CardRepository) GetByDeckID(ctx context.Context, deckID string, page, limit int) ([]*card.Card, int, error) {
 	offset := (page - 1) * limit
+
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM cards WHERE deck_id = $1`
+	err := r.db.QueryRowContext(ctx, countQuery, deckID).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count cards: %w", err)
+	}
+
+	if totalCount == 0 {
+		return []*card.Card{}, 0, nil
+	}
+
 	query := `SELECT id, deck_id, front, back, interval, ease_factor, repetitions, due_date FROM cards WHERE deck_id = $1 LIMIT $2 OFFSET $3`
 	rows, err := r.db.QueryContext(ctx, query, deckID, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("failed to query cards: %w", err)
 	}
 	defer rows.Close()
 
@@ -77,11 +102,11 @@ func (r *CardRepository) GetByDeckID(ctx context.Context, deckID string, page, l
 		c := &card.Card{}
 		err := rows.Scan(&c.ID, &c.DeckID, &c.Front, &c.Back, &c.Interval, &c.EaseFactor, &c.Repetitions, &c.DueDate)
 		if err != nil {
-			return nil, err
+			return nil, 0, fmt.Errorf("failed to scan cards: %w", err)
 		}
 		result = append(result, c)
 	}
-	return result, nil
+	return result, totalCount, nil
 }
 
 // Update is used to save the new Interval/EaseFactor after a study session

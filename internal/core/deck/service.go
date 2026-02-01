@@ -48,7 +48,7 @@ func (s *Service) CreateDeck(ctx context.Context, req NewDeckRequest) (*Deck, er
 }
 
 // GetUserDecks fetches all decks for a user
-func (s *Service) GetUserDecks(ctx context.Context, userID string, page, limit int) ([]*Deck, error) {
+func (s *Service) GetUserDecks(ctx context.Context, userID string, page, limit int) ([]*Deck, int, error) {
 	return s.repo.ListByOwner(ctx, userID, page, limit)
 }
 

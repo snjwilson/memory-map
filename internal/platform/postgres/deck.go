@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/snjwilson/memory-map/internal/core/deck"
 )
@@ -32,12 +33,33 @@ func (r *DeckRepository) GetByID(ctx context.Context, id string) (*deck.Deck, er
 	return d, err
 }
 
-func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string, page, limit int) ([]*deck.Deck, error) {
+// ListByOwner returns the slice of decks, the total count, and any error
+func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string, page, limit int) ([]*deck.Deck, int, error) {
 	offset := (page - 1) * limit
-	query := `SELECT id, owner_id, name, description, is_public, card_count, created_at, updated_at FROM decks WHERE owner_id = $1 LIMIT $2 OFFSET $3`
+
+	// 1. Get the Total Count
+	var totalCount int
+	countQuery := `SELECT COUNT(*) FROM decks WHERE owner_id = $1`
+	err := r.db.QueryRowContext(ctx, countQuery, ownerId).Scan(&totalCount)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to count decks: %w", err)
+	}
+
+	// If no records exist, we can skip the second query
+	if totalCount == 0 {
+		return []*deck.Deck{}, 0, nil
+	}
+
+	// 2. Get the Paginated Data
+	query := `SELECT id, owner_id, name, description, is_public, card_count, created_at, updated_at 
+              FROM decks 
+              WHERE owner_id = $1 
+              ORDER BY created_at DESC 
+              LIMIT $2 OFFSET $3`
+
 	rows, err := r.db.QueryContext(ctx, query, ownerId, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, 0, fmt.Errorf("failed to query decks: %w", err)
 	}
 	defer rows.Close()
 
@@ -46,11 +68,12 @@ func (r *DeckRepository) ListByOwner(ctx context.Context, ownerId string, page, 
 		d := &deck.Deck{}
 		err := rows.Scan(&d.ID, &d.OwnerID, &d.Name, &d.Description, &d.IsPublic, &d.CardCount, &d.CreatedAt, &d.UpdatedAt)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 		result = append(result, d)
 	}
-	return result, nil
+
+	return result, totalCount, nil
 }
 
 func (r *DeckRepository) Update(ctx context.Context, d *deck.Deck) error {
