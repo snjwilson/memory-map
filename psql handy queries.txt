@@ -67,7 +67,6 @@ CREATE INDEX idx_review_logs_review_time ON review_logs(review_time);
 
 
 3. Analytics Power-Moves (SQL Queries)
-Because of the way we structured this table, you can now run some very powerful "Goldman-level" analytics queries with ease:
 
 Total Time Studied: SELECT SUM(duration_ms) / 1000 / 60 as minutes_studied FROM review_logs;
 

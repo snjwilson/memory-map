@@ -77,7 +77,6 @@ func (s *Service) SubmitReview(ctx context.Context, cardID string, rating Rating
 	}
 
 	// We handle the log error gracefully (logging it) rather than failing the whole request
-	// In production, use a logger here
 	_ = s.reviewRepo.LogReview(ctx, log)
 
 	return card, nil
