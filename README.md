@@ -136,7 +136,6 @@ make vet
 
 ```bash
 make build
-# Binary will be at bin/memory-map
 ```
 
 ## Project Structure Highlights

@@ -20,7 +20,6 @@ func RunMigrationsWithRetry(dbURL string) error {
 	)
 
 	for i := 1; i <= maxAttempts; i++ {
-		// file://migrations points to your local folder
 		m, err = migrate.New("file://migrations", dbURL)
 		if err == nil {
 			log.Printf("Successfully connected to database on attempt %d", i)

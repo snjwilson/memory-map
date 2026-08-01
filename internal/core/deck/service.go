@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid" // You might need: go get github.com/google/uuid
+	"github.com/google/uuid"
 )
 
 // Service handles all business logic for decks
@@ -53,7 +53,6 @@ func (s *Service) GetUserDecks(ctx context.Context, userID string, page, limit i
 }
 
 // GetDeckById fetches one deck by id
-// returns an error if deck does not exist
 func (s *Service) GetDeckById(ctx context.Context, id string) (*Deck, error) {
 	existing, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -64,18 +63,15 @@ func (s *Service) GetDeckById(ctx context.Context, id string) (*Deck, error) {
 
 // UpdateDeck handles renaming or changing description
 func (s *Service) UpdateDeck(ctx context.Context, id string, name string, description string) error {
-	// 1. Fetch existing to ensure it exists
 	existing, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	// 2. Apply updates
 	existing.Name = name
 	existing.Description = description
 	existing.UpdatedAt = time.Now().UTC()
 
-	// 3. Save
 	return s.repo.Update(ctx, existing)
 }
 

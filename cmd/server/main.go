@@ -20,7 +20,6 @@ import (
 )
 
 func main() {
-	// 1. Initialize a JSON logger (Standard for backends)
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	slog.SetDefault(logger)
 
@@ -30,7 +29,6 @@ func main() {
 	}
 
 	// Run migrations before starting the server
-	// This will block until migrations succeed or max retries are hit
 	err := postgres.RunMigrationsWithRetry(dbUrl)
 	if err != nil {
 		log.Fatalf("Could not run migrations: %v", err)
@@ -47,7 +45,6 @@ func main() {
 		"env", "development",
 	)
 
-	// Wire up the infrastructure
 	deckRepo := postgres.NewDeckRepository(db)
 	cardRepo := postgres.NewCardRepository(db)
 	reviewRepo := postgres.NewReviewRepository(db)
